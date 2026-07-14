@@ -149,7 +149,9 @@
             <div class="space-y-2">
                 <div class="flex justify-between items-center">
                     <div id="connection-status" class="flex items-center gap-2 px-3 py-2 rounded border bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/20 dark:text-amber-400 dark:border-amber-900/30 text-xs font-bold flex-grow mr-2">
-                        <span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
+                        <span id="connection-status-dot" class="flex-shrink-0 flex items-center justify-center w-3.5 h-3.5">
+                            <span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse block"></span>
+                        </span>
                         <span id="connection-status-text">Buscando Servidor...</span>
                     </div>
                     <button id="btn-toggle-api-settings" onclick="toggleApiSettings()" class="p-2 rounded border border-slate-200 dark:border-darkBorder bg-slate-50 dark:bg-slate-800 text-slate-550 hover:text-slate-850 dark:text-slate-400 dark:hover:text-white transition" title="Configurar URL del Servidor">
@@ -816,6 +818,8 @@
         const lifestyleBadge = document.getElementById('lifestyle-score-badge');
 
         let isApiOnline = false;
+        let apiStatus = 'offline'; // 'connected', 'connecting', 'offline'
+        let isChecking = false;
         const DEFAULT_API_URL = 'https://web-cardiovascular.onrender.com';
         let apiUrl = localStorage.getItem('cardio_api_url') || DEFAULT_API_URL;
         let localApiUrl = apiUrl + '/predecir';
@@ -825,17 +829,36 @@
 
         // Check backend server connection
         async function checkServerConnection() {
+            if (isChecking) return;
+            isChecking = true;
+
+            const isCurrentlyOffline = (apiStatus !== 'connected');
+            if (isCurrentlyOffline) {
+                setApiStatus('connecting');
+            }
+
             try {
                 const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 1500);
+                // Render cold start takes ~30-50s. We wait longer (50s) if offline/connecting.
+                // If already online, we use a quick 3s heartbeat check.
+                const timeoutLimit = isCurrentlyOffline ? 50000 : 3000;
+                const timeoutId = setTimeout(() => controller.abort(), timeoutLimit);
+                
                 const response = await fetch(apiUrl + '/', { 
                     method: 'GET',
                     signal: controller.signal
                 });
                 clearTimeout(timeoutId);
-                setApiStatus(true);
+                
+                if (response.ok || response.status === 404 || response.status === 200) {
+                    setApiStatus('connected');
+                } else {
+                    throw new Error("API responded with error");
+                }
             } catch (error) {
-                setApiStatus(false);
+                setApiStatus('offline');
+            } finally {
+                isChecking = false;
             }
         }
 
@@ -879,15 +902,35 @@
             checkServerConnection();
         }
 
-        function setApiStatus(online) {
-            isApiOnline = online;
-            connectionBadge.className = "flex items-center gap-1.5 px-3 py-1.5 rounded border text-xs font-semibold " + 
-                (online 
-                    ? "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/20 dark:text-emerald-400 dark:border-emerald-900/30" 
-                    : "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/20 dark:text-amber-400 dark:border-amber-900/30");
+        function setApiStatus(status) {
+            apiStatus = status;
+            isApiOnline = (status === 'connected');
+            const dotContainer = document.getElementById('connection-status-dot');
             
-            connectionBadge.querySelector('span').className = "w-1.5 h-1.5 rounded-full " + (online ? "bg-emerald-500" : "bg-amber-500 animate-pulse");
-            connectionText.innerText = online ? "Servidor API: Conectado" : "Servidor API: Modo Simulador";
+            if (status === 'connected') {
+                connectionBadge.className = "flex items-center gap-2 px-3 py-2 rounded border bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/20 dark:text-emerald-400 dark:border-emerald-900/30 text-xs font-bold flex-grow mr-2";
+                if (dotContainer) {
+                    dotContainer.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-emerald-500 block"></span>`;
+                }
+                connectionText.innerText = "Servidor API: Conectado";
+            } else if (status === 'connecting') {
+                connectionBadge.className = "flex items-center gap-2 px-3 py-2 rounded border bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/20 dark:text-blue-400 dark:border-blue-900/30 text-xs font-bold flex-grow mr-2";
+                if (dotContainer) {
+                    dotContainer.innerHTML = `
+                        <span class="relative flex h-2 w-2">
+                            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+                            <span class="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
+                        </span>
+                    `;
+                }
+                connectionText.innerText = "Despertando Servidor (Render)...";
+            } else {
+                connectionBadge.className = "flex items-center gap-2 px-3 py-2 rounded border bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/20 dark:text-amber-400 dark:border-amber-900/30 text-xs font-bold flex-grow mr-2";
+                if (dotContainer) {
+                    dotContainer.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse block"></span>`;
+                }
+                connectionText.innerText = "Modo Simulador (Servidor Inactivo)";
+            }
         }
 
         // Toast alert system
@@ -924,7 +967,7 @@
         // Initialize server polling and light/dark theme settings
         window.addEventListener('DOMContentLoaded', () => {
             checkServerConnection();
-            setInterval(checkServerConnection, 8000);
+            setInterval(checkServerConnection, 12000);
             
             // Check storage theme
             const storageTheme = localStorage.getItem('theme');
