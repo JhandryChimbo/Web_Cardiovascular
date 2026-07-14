@@ -160,7 +160,7 @@
                 <!-- Collapsible API Configuration Panel -->
                 <div id="api-settings-panel" class="hidden p-3 rounded border border-slate-200 dark:border-darkBorder bg-slate-50/50 dark:bg-slate-800/30 space-y-2 text-left">
                     <label for="api-url-input" class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">URL del Servidor API</label>
-                    <input type="url" id="api-url-input" class="w-full text-xs border border-slate-300 dark:border-darkBorder rounded px-2 py-1 bg-white dark:bg-slate-850 text-slate-900 dark:text-white focus:outline-none focus:border-clinicalBlue-600" placeholder="http://localhost:8000">
+                    <input type="url" id="api-url-input" class="w-full text-xs border border-slate-300 dark:border-darkBorder rounded px-2 py-1 bg-white dark:bg-slate-850 text-slate-900 dark:text-white focus:outline-none focus:border-clinicalBlue-600" placeholder="https://web-cardiovascular.onrender.com">
                     <div class="flex gap-1.5">
                         <button onclick="saveApiUrl()" class="flex-1 py-1 px-2 bg-clinicalBlue-700 hover:bg-clinicalBlue-800 text-white rounded text-[10px] font-bold shadow transition text-center">
                             Guardar
@@ -816,7 +816,7 @@
         const lifestyleBadge = document.getElementById('lifestyle-score-badge');
 
         let isApiOnline = false;
-        const DEFAULT_API_URL = 'http://localhost:8000';
+        const DEFAULT_API_URL = 'https://web-cardiovascular.onrender.com';
         let apiUrl = localStorage.getItem('cardio_api_url') || DEFAULT_API_URL;
         let localApiUrl = apiUrl + '/predecir';
         
