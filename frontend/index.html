@@ -146,9 +146,30 @@
         <!-- Sidebar Footer Controls -->
         <div class="p-5 border-t border-slate-100 dark:border-darkBorder/60 space-y-4">
             <!-- Server Connection Badge -->
-            <div id="connection-status" class="flex items-center gap-2 px-3 py-2 rounded border bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/20 dark:text-amber-400 dark:border-amber-900/30 text-xs font-bold">
-                <span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
-                <span id="connection-status-text">Buscando Servidor...</span>
+            <div class="space-y-2">
+                <div class="flex justify-between items-center">
+                    <div id="connection-status" class="flex items-center gap-2 px-3 py-2 rounded border bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/20 dark:text-amber-400 dark:border-amber-900/30 text-xs font-bold flex-grow mr-2">
+                        <span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
+                        <span id="connection-status-text">Buscando Servidor...</span>
+                    </div>
+                    <button id="btn-toggle-api-settings" onclick="toggleApiSettings()" class="p-2 rounded border border-slate-200 dark:border-darkBorder bg-slate-50 dark:bg-slate-800 text-slate-550 hover:text-slate-850 dark:text-slate-400 dark:hover:text-white transition" title="Configurar URL del Servidor">
+                        <i class="fa-solid fa-gear text-xs"></i>
+                    </button>
+                </div>
+                
+                <!-- Collapsible API Configuration Panel -->
+                <div id="api-settings-panel" class="hidden p-3 rounded border border-slate-200 dark:border-darkBorder bg-slate-50/50 dark:bg-slate-800/30 space-y-2 text-left">
+                    <label for="api-url-input" class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">URL del Servidor API</label>
+                    <input type="url" id="api-url-input" class="w-full text-xs border border-slate-300 dark:border-darkBorder rounded px-2 py-1 bg-white dark:bg-slate-850 text-slate-900 dark:text-white focus:outline-none focus:border-clinicalBlue-600" placeholder="http://localhost:8000">
+                    <div class="flex gap-1.5">
+                        <button onclick="saveApiUrl()" class="flex-1 py-1 px-2 bg-clinicalBlue-700 hover:bg-clinicalBlue-800 text-white rounded text-[10px] font-bold shadow transition text-center">
+                            Guardar
+                        </button>
+                        <button onclick="resetApiUrl()" class="py-1 px-2 border border-slate-300 dark:border-darkBorder bg-white dark:bg-slate-800 rounded text-[10px] font-bold text-slate-600 dark:text-slate-400 hover:bg-slate-100 transition text-center">
+                            Restablecer
+                        </button>
+                    </div>
+                </div>
             </div>
 
             <!-- Mode Switch & Credits -->
@@ -795,7 +816,9 @@
         const lifestyleBadge = document.getElementById('lifestyle-score-badge');
 
         let isApiOnline = false;
-        const localApiUrl = 'http://localhost:8000/predecir';
+        const DEFAULT_API_URL = 'http://localhost:8000';
+        let apiUrl = localStorage.getItem('cardio_api_url') || DEFAULT_API_URL;
+        let localApiUrl = apiUrl + '/predecir';
         
         // Cache variable to store analyzed batch from Excel
         let analyzedBatchData = [];
@@ -804,8 +827,8 @@
         async function checkServerConnection() {
             try {
                 const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 1200);
-                const response = await fetch('http://localhost:8000/', { 
+                const timeoutId = setTimeout(() => controller.abort(), 1500);
+                const response = await fetch(apiUrl + '/', { 
                     method: 'GET',
                     signal: controller.signal
                 });
@@ -814,6 +837,46 @@
             } catch (error) {
                 setApiStatus(false);
             }
+        }
+
+        // Toggle the API Settings Panel
+        function toggleApiSettings() {
+            const panel = document.getElementById('api-settings-panel');
+            panel.classList.toggle('hidden');
+            if (!panel.classList.contains('hidden')) {
+                document.getElementById('api-url-input').value = apiUrl;
+            }
+        }
+
+        // Save Custom API URL
+        function saveApiUrl() {
+            const input = document.getElementById('api-url-input');
+            let val = input.value.trim();
+            if (!val) {
+                showToast("Por favor, ingrese una URL válida.", "error");
+                return;
+            }
+            // Remove trailing slash for consistency
+            if (val.endsWith('/')) {
+                val = val.slice(0, -1);
+            }
+            apiUrl = val;
+            localApiUrl = apiUrl + '/predecir';
+            localStorage.setItem('cardio_api_url', val);
+            showToast("URL del Servidor guardada. Recomprobando conexión...", "info");
+            document.getElementById('api-settings-panel').classList.add('hidden');
+            checkServerConnection();
+        }
+
+        // Reset to Default API URL
+        function resetApiUrl() {
+            apiUrl = DEFAULT_API_URL;
+            localApiUrl = apiUrl + '/predecir';
+            localStorage.removeItem('cardio_api_url');
+            document.getElementById('api-url-input').value = DEFAULT_API_URL;
+            showToast("Se restableció la URL del servidor predeterminada.", "info");
+            document.getElementById('api-settings-panel').classList.add('hidden');
+            checkServerConnection();
         }
 
         function setApiStatus(online) {

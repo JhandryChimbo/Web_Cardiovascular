@@ -26,6 +26,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+@app.get("/")
+def read_root():
+    return {"status": "online", "message": "API de Riesgo Cardiovascular activa"}
+
 # 2. El usuario solo envía 11 variables puras (las del formulario clínico)
 class DatosPaciente(BaseModel):
     age: int          # Edad en DÍAS (como lo espera tu script original)

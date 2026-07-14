@@ -1,0 +1,19 @@
+services:
+  # FastAPI Backend Service
+  - type: web
+    name: web-cardio-backend
+    env: python
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    plan: free
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.10.12
+
+  # Static HTML Frontend Service
+  - type: static
+    name: web-cardio-frontend
+    rootDir: frontend
+    publishPath: .
+    plan: free
