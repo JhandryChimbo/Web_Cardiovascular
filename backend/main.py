@@ -6,11 +6,12 @@ import pandas as pd
 import sklearn as sklearn
 from pydantic import BaseModel
 
-# 1. Cargar el modelo y el escalador
-# IMPORTANTE: Asegúrate de colocar las rutas correctas a los archivos
-modelo_xgb = joblib.load('best_model_XGB.joblib')
-# Descomenta la siguiente línea y pon el nombre del scaler que guardaste en tu script
-scaler = joblib.load('scaler.joblib') 
+import os
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+# 1. Cargar el modelo y el escalador utilizando rutas absolutas relativas al archivo
+modelo_xgb = joblib.load(os.path.join(BASE_DIR, 'best_model_XGB.joblib'))
+scaler = joblib.load(os.path.join(BASE_DIR, 'scaler.joblib')) 
 
 app = FastAPI(
     title="API Riesgo Cardiovascular - Proyecto de Tesis",
