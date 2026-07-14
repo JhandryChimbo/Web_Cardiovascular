@@ -1,5 +1,5 @@
-# CardioGuard AI - Diagnóstico Clínico Predictivo
-¡Bienvenido a **CardioGuard AI** (también conocido como CardioCare)! Este proyecto es una plataforma médica de diagnóstico predictivo diseñada para la evaluación clínica del riesgo cardiovascular. Utiliza modelos avanzados de Machine Learning (XGBoost) entrenados con ingeniería de características (*Feature Engineering*) especializada para ofrecer predicciones precisas sobre el riesgo de un paciente.
+# CardioCare - Diagnóstico Clínico Predictivo
+Este proyecto es una plataforma médica de diagnóstico predictivo diseñada para la evaluación clínica del riesgo cardiovascular. Utiliza modelos avanzados de Machine Learning (XGBoost) entrenados con ingeniería de características (*Feature Engineering*) especializada para ofrecer predicciones precisas sobre el riesgo de un paciente.
 
 Desarrollado por **Jhandry Chimbo**.
 
